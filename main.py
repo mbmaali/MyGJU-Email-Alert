@@ -13,7 +13,7 @@ def check_website_status():
         else:
             return f"Website returned error {response.status_code}"
     except requests.exceptions.RequestException as e:
-        return f"Website is NOT working ❌ ({e})"
+        return f"Website is NOT working  ({e})"
     
 
 
