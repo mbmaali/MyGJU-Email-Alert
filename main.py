@@ -1,15 +1,35 @@
 import requests
 from bs4 import BeautifulSoup
 # import selenium
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+import time
+
+
 
 mygju_username =  "REDACTED"
 mygju_password = "REDACTED"
 
 mygju_url = "https://mygju.gju.edu.jo/faces/index.xhtml"
-mygju_login_post_url = "https://mygju.gju.edu.jo/faces/index.xhtml"
+mygju_login_url = "https://mygju.gju.edu.jo/faces/index.xhtml"
+mygju_schedule_url = "https://mygju.gju.edu.jo/faces/schedules/student_schedule.xhtml"
+
+username_field_xpath = """//*[@id="j_idt15:login_username"]"""
+password_field_xpath = """//*[@id="j_idt15:login_password"]""" 
+login_as_student_button_xpath = """/html/body/div[1]/div[2]/form/center/fieldset/div/button[1]/span"""
+
+
+
+
+chromedriver_path = "chromedriver.exe"  
+
+
+
+
+
 
 def check_website_status():
-    
     try:
         response = requests.get(mygju_url, timeout=5)
         if response.status_code == 200:
@@ -20,49 +40,34 @@ def check_website_status():
             return f"Website returned error {response.status_code}"
     except requests.exceptions.RequestException as e:
         return f"Website is not working ({e})"
+
+def start_driver_and_login():
+    service = Service(chromedriver_path)
+    driver = webdriver.Chrome(service=service)
+    driver.get(mygju_login_url)
+    time.sleep(5)
+    login_as_student_button = driver.find_element(By.XPATH, login_as_student_button_xpath)
+    username_field = driver.find_element(By.XPATH, username_field_xpath)  
+    password_field = driver.find_element(By.XPATH, password_field_xpath)  
+    username_field.send_keys(mygju_username)
+    password_field.send_keys(mygju_password)
+    time.sleep(1)
+    login_as_student_button.click()
+    time.sleep(1)
+    driver.get(mygju_schedule_url)
+
+  
+
+
+
     
-def mygju_login(username, password):
-
-
-    session = requests.Session()
-    session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    })
-
-    get_resp = session.get(mygju_url)
-
-    soup = BeautifulSoup(get_resp.text, "html.parser")
-    viewstate = ""
-    
-    viewstate_input = soup.find("input", {"name": "javax.faces.ViewState"})
-    if viewstate_input:
-
-        viewstate = viewstate_input["value"]
-
-    data = {
-        "j_idt15": "j_idt15",
-        "j_idt15:login_username": username,
-        "j_idt15:login_password": password,
-        "j_idt15:j_idt25": "j_idt15:j_idt25",
-        "j_idt15:j_idt25:j_idt26": "",
-        "javax.faces.ViewState": viewstate,
-
-    }
-
-    post_resp = session.post(mygju_login_post_url, data=data)
-    return post_resp
-
 
 def main():
     if check_website_status() == 200:
-        respo = mygju_login(mygju_username, mygju_password)
+        start_driver_and_login()
 
-        print("login response status:", respo.status_code)
-        # print(respo.text)  
-        if "Schedule" in respo.text:
-            print("Logged in")
-        else:
-            print("error")
+    else:
+        print("error")
 
 
 if __name__ == "__main__":
